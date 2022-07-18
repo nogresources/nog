@@ -1,59 +1,74 @@
-#!/usr/bin/env node
+class NOG {
+  constructor() {
+    this.resourcePath = GetResourceMetadata(GetCurrentResourceName(), 'nog_resources_path', 0);
+    this.nog_mirror = GetResourceMetadata(GetCurrentResourceName(), 'nog_mirror', 0);
+    this.commands = {
+      'install': require('./commands/install'),
+      'resources': require('./commands/resources'),
+    };
+    this.resources = [];
+  }
 
-const program = require('commander');
-const package = require('./package.json');
-const installCmd = require ('./commands/install');
+  command(argument, resource = null, options = null) {
+    switch (argument) {
+      case 'install':
+        this.commands[argument](this, resource, options)
+        break;
+      case 'resources':
+        this.commands[argument](this)
+        break;
+      case 'mirror':
+        console.log('mirror:', this.nog_mirror);
+        break;
+      default:
+        console.log('command not found')
+    }
+  }
 
-program.version(package.version);
+  getMirror() {
+    return this.nog_mirror;
+  }
 
+  getPath() {
+    return this.resourcePath;
+  }
 
-// program.command('install [resource]').description('Adiciona um to-do').action(resource => installCmd(resource));
-// program.command('update [resource]').description('Adiciona um to-do').action(resource => installCmd(resource));
-// program.command('remove [resource]').description('Adiciona um to-do').action(resource => installCmd(resource));
-// program.command('verify [resource]').description('Adiciona um to-do').action(resource => installCmd(resource));
-// program.command('upload [resource]').description('Adiciona um to-do').action(resource => installCmd(resource));
+  getInfo(resource, key) {
+    return GetNumResourceMetadata(resource, key) > 0 ? GetResourceMetadata(resource, key, 0) : null;
+  }
 
-// program.option('-ce, --config <email>', 'configura o email');
-// program.option('-c, --cheese <type>', 'add the specified type of cheese', 'blue');
+  setResource(resource, seed, version = null, description = null, token = null){
+    this.resources.push({resource: resource, seed: seed, token: token, version: version, description: description})
+  }
+}
 
-program.argument('<name>')
-  .argument('[resource]')
-  .option('-t, --title <honorific>', 'title to use before name')
-  .option('-d, --debug', 'display some debugging')
-  .action((name, resource, options, command) => {
+const _Nog = new NOG();
 
-    switch(name) {
-        case 'install': 
-            installCmd(resource); 
-            break;
-        case 'update': 
-            installCmd(resource); 
-            break;
-        case 'remove': 
-            installCmd(resource); 
-            break;
-        case 'verify': 
-            installCmd(resource); 
-            break;
-        case 'upload': 
-            installCmd(resource); 
-            break;
-        default:
-            console.log('unknown command. --help for details');
-            return;
+on("onResourceStart", (resourceName) => {
+  if (GetCurrentResourceName() != resourceName) {
+    return;
+  }
+
+  let numResources = GetNumResources()
+
+  for (let i = 0; i < numResources; i++) {
+    var resource = GetResourceByFindIndex(i);
+
+    if (GetNumResourceMetadata(resource, 'nog') > 0) {
+      let version = _Nog.getInfo(resource, 'version');
+      let description = _Nog.getInfo(resource, 'description');
+      let nog_seed = _Nog.getInfo(resource, 'nog_seed');
+      let nog_token = _Nog.getInfo(resource, 'nog_token');
+
+      _Nog.setResource(resource, nog_seed, version, description, nog_token);
+
     }
 
-    if (options.debug) {
-      console.error('Called %s with options %o', command.name(), options);
-    }
-    // const title = options.title ? `${options.title} ` : '';
-    // console.log(`Thank-you ${title}${name}`);
-  });
+  }
 
-program.parse(process.argv);
+});
 
-// 
 
-// program.parse();
-
-// 
+RegisterCommand('nog', function (source, args, rawCommand) {
+  _Nog.command(args[0], args[1] || null, args.filter(arg => arg.includes('--')));
+}, true);

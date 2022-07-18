@@ -1,25 +1,5 @@
 {
-  "name": "nog",
-  "version": "alpha0.0.1",
-  "description": "Um Gerenciador de recursos FiveM",
-  "main": "nog.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/nogresources/nog.git"
-  },
-  "author": "Allex Nogue",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/nogresources/nog/issues"
-  },
-  "homepage": "https://github.com/nogresources/nog#readme",
-  "bin": {
-    "nog": "index.js"
-  },
   "dependencies": {
-    "commander": "^9.4.0"
+    "request": "^2.88.2"
   }
 }
