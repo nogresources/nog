@@ -2,27 +2,55 @@ class NOG {
   constructor() {
     this.resourcePath = GetResourceMetadata(GetCurrentResourceName(), 'nog_resources_path', 0);
     this.nog_mirror = GetResourceMetadata(GetCurrentResourceName(), 'nog_mirror', 0);
+    this.nog_description = GetResourceMetadata(GetCurrentResourceName(), 'description', 0);
     this.commands = {
       'install': require('./commands/install'),
+      'i': require('./commands/install'),
       'resources': require('./commands/resources'),
+      'r': require('./commands/resources'),
     };
     this.resources = [];
   }
 
   command(argument, resource = null, options = null) {
-    switch (argument) {
-      case 'install':
-        this.commands[argument](this, resource, options)
-        break;
-      case 'resources':
-        this.commands[argument](this)
-        break;
-      case 'mirror':
-        console.log('mirror:', this.nog_mirror);
-        break;
-      default:
-        console.log('command not found')
+    options = this.resolveOptions(options);
+
+    if (argument != null) {
+      switch (argument) {
+        case 'install':
+        case 'i':
+          this.commands[argument](this, resource, options)
+          break;
+        case 'resources':
+        case 'r':
+          this.commands[argument](this)
+          break;
+        case 'mirror':
+        case 'm':
+          console.log('mirror:', this.nog_mirror);
+          break;
+        default:
+          console.log('command not found')
+      }
+      return;
     }
+
+    return console.log(this.nog_description);
+
+  }
+
+  resolveOptions(options) {
+    if (options == null) return options;
+    let ret = [];
+
+    options.map(option => {
+      let op = option.split('=');
+      let op1 = op[0].replace('--', '');
+      ret[op1] = op[1];
+    })
+
+    return ret;
+
   }
 
   getMirror() {
@@ -37,8 +65,8 @@ class NOG {
     return GetNumResourceMetadata(resource, key) > 0 ? GetResourceMetadata(resource, key, 0) : null;
   }
 
-  setResource(resource, seed, version = null, description = null, token = null){
-    this.resources.push({resource: resource, seed: seed, token: token, version: version, description: description})
+  setResource(resource, seed, version = null, description = null, token = null) {
+    this.resources.push({ resource: resource, seed: seed, token: token, version: version, description: description })
   }
 }
 

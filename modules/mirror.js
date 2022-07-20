@@ -1,5 +1,6 @@
 const request = require('request');
 const fs = require('fs');
+const cliProgress = require('cli-progress');
 
 module.exports = {
     resource: async (mirror, _resource, qs = '') => {
@@ -13,32 +14,39 @@ module.exports = {
             });
         });
     },
-    download: async (path, mirror, _resource, qs = '') => {
-        let dir = `${path}/${_resource}`;
+    download: async (path, mirror, _resource, qs = '', optionalFolder = '', _version = null) => {
+        const progressbar = new cliProgress.SingleBar({
+            format: `NOG: Downloading ${_resource.name}` + ' | {bar} {percentage}% {value}/{total}bytes',
+        }, cliProgress.Presets.shades_classic);
+
+        let dir = `${path}/${optionalFolder}${_resource.name}`;
         if (!fs.existsSync(`${dir}`)) {
             fs.mkdirSync(`${dir}`);
         }
 
-        let file = fs.createWriteStream(`${dir}/file.pdf`);
+        let file = fs.createWriteStream(`${dir}/${_resource.name}.zip`);
         var received_bytes = 0;
         var total_bytes = 0;
 
         return new Promise((resolve, reject) => {
-            request.get('https://opendevices.ru/wp-content/uploads/2012/09/W90N745CD_W90N745CDGb.pdf')
+            request.get('http://portal.pmf.sc.gov.br/arquivos/arquivos/zip/14_04_2011_16.04.09.517c170f3a630ca5a8af2ec1f93ba247.zip')
                 .on('error', function (err) {
                     console.log(err);
                 }).on('response', function (data) {
                     total_bytes = parseInt(data.headers['content-length']);
+                    progressbar.start(total_bytes, 0);
                 }).on('data', function (chunk) {
                     received_bytes += chunk.length;
-                    // console.log(received_bytes, total_bytes);
                     var total = total_bytes / 1048576;
-                    console.log(`Downloading ${_resource} ` + (100.0 * received_bytes / total_bytes).toFixed(2) + "% " + (received_bytes / 1048576).toFixed(2) + "/" + total.toFixed(2) + "mb")
-                }).on('finish', () => {
-                    console.log(`The file is finished downloading.`);
+                    // console.log(`Downloading ${_resource} ` + (100.0 * received_bytes / total_bytes).toFixed(2) + "% " + (received_bytes / 1048576).toFixed(2) + "/" + total.toFixed(2) + "mb")
+                    let progressFil = received_bytes;
+                    progressbar.update(progressFil);
+                }).pipe(file).on('finish', () => {
+                    progressbar.stop();
+                    console.log(`The script is finished downloading.`);
                     file.close();
-                    resolve();
-                }).pipe(file);
+                    resolve(file);
+                });
         })
 
 
