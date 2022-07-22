@@ -21,6 +21,14 @@ class NOG {
         case 'i':
           this.commands[argument](this, resource, options)
           break;
+        case 'update':
+        case 'u':
+          //todo
+          break;
+        case 'purge':
+        case 'p':
+          //todo
+          break;
         case 'resources':
         case 'r':
           this.commands[argument](this)
